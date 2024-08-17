@@ -1,11 +1,13 @@
 package virtuoel.statement.util;
 
+import net.minecraft.util.Identifier;
+
 import java.lang.invoke.MethodHandle;
 
 public class IdentifierUtil {
 //	public static final Optional<Class<?>> IDENTIFIER_CLASS;
-	private static final MethodHandle OF_METHOD = FabricReflectionUtils.getMinecraftMethod(IdentifierUtil.class, "net.minecraft.class_2960", "method_60655", "(Ljava/lang/String;Ljava/lang/String;)Lnet/minecraft/class_2960;", String.class, String.class);
-	private static final MethodHandle OF_METHOD_2 = FabricReflectionUtils.getMinecraftMethod(IdentifierUtil.class, "net.minecraft.class_2960", "method_60654", "(Ljava/lang/String;)Lnet/minecraft/class_2960;", String.class);
+	private static final MethodHandle OF_METHOD = FabricReflectionUtils.getMinecraftMethod(Identifier.class, "net.minecraft.class_2960", "method_60655", "(Ljava/lang/String;Ljava/lang/String;)Lnet/minecraft/class_2960;", String.class, String.class);
+	private static final MethodHandle OF_METHOD_2 = FabricReflectionUtils.getMinecraftMethod(Identifier.class, "net.minecraft.class_2960", "method_60654", "(Ljava/lang/String;)Lnet/minecraft/class_2960;", String.class);
 //	public static final Optional<Constructor<Identifier>> CONSTRUCTOR;
 
 	public static <T> T of(String namespace, String path) {

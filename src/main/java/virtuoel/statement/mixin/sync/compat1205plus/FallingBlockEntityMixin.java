@@ -1,4 +1,4 @@
-package virtuoel.statement.mixin.sync;
+package virtuoel.statement.mixin.sync.compat1205plus;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,10 +13,9 @@ import virtuoel.statement.Statement;
 public abstract class FallingBlockEntityMixin
 {
 	@Shadow abstract BlockState getBlockState();
-	
-	@ModifyArg(method = "createSpawnPacket", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/EntitySpawnS2CPacket;<init>(Lnet/minecraft/entity/Entity;I)V"))
-	private int createSpawnPacketGetRawIdFromStateModify(int id)
-	{
+
+	@ModifyArg(method = "createSpawnPacket", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/packet/s2c/play/EntitySpawnS2CPacket;<init>(Lnet/minecraft/entity/Entity;Lnet/minecraft/server/network/EntityTrackerEntry;I)V"))
+	private int createSpawnPacketGetRawIdFromStateModify(int id) {
 		return Statement.getSyncedBlockStateId(getBlockState()).orElse(id);
 	}
 }

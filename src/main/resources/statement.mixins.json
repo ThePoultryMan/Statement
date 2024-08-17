@@ -39,9 +39,9 @@
 		"compat1203plus.IdListMixin",
 		"compat1205plus.SimpleDefaultedRegistryMixin",
 		"compat1205plus.StateMixin",
-		"sync.BlockStateParticleEffectMixin",
+		"sync.compat1204minus.BlockStateParticleEffectMixin",
 		"sync.ChunkDeltaUpdateS2CPacketMixin",
-		"sync.FallingBlockEntityMixin",
+		"sync.compat114.compat1204minus.FallingBlockEntityMixin",
 		"sync.WorldEventS2CPacketMixin",
 		"sync.compat114.PlayerActionResponseS2CPacketMixin",
 		"sync.compat115minus.BlockUpdateS2CPacketMixin",
@@ -55,7 +55,8 @@
 		"sync.compat118plus.compat1201minus.ArrayPaletteMixin",
 		"sync.compat118plus.compat1201minus.BiMapPaletteMixin",
 		"sync.compat1202plus.ArrayPaletteMixin",
-		"sync.compat1202plus.BiMapPaletteMixin"
+		"sync.compat1202plus.BiMapPaletteMixin",
+		"sync.compat1205plus.FallingBlockEntityMixin"
 	],
 	"client":
 	[
