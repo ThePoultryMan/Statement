@@ -39,11 +39,7 @@ import virtuoel.kanos_config.api.JsonConfigBuilder;
 import virtuoel.kanos_config.api.MutableConfigEntry;
 import virtuoel.statement.api.StatementApi;
 import virtuoel.statement.api.StatementConfig;
-import virtuoel.statement.util.FabricApiCompatibility;
-import virtuoel.statement.util.ModLoaderUtils;
-import virtuoel.statement.util.RegistryUtils;
-import virtuoel.statement.util.StatementPropertyExtensions;
-import virtuoel.statement.util.StatementStateExtensions;
+import virtuoel.statement.util.*;
 
 @ApiStatus.Internal
 public class Statement implements ModInitializer, StatementApi
@@ -82,7 +78,7 @@ public class Statement implements ModInitializer, StatementApi
 	
 	public static Identifier id(String name)
 	{
-		return new Identifier(MOD_ID, name);
+		return IdentifierUtil.of(MOD_ID, name);
 	}
 	
 	public static void markRegistryAsModded(Registry<?> registry)
@@ -134,7 +130,7 @@ public class Statement implements ModInitializer, StatementApi
 		
 		for (final Entry<String, JsonElement> e : data.entrySet())
 		{
-			RegistryUtils.getOrEmpty(registry, new Identifier(e.getKey())).ifPresent(block ->
+			RegistryUtils.getOrEmpty(registry, IdentifierUtil.of(e.getKey())).ifPresent(block ->
 			{
 				final JsonArray states = Optional.ofNullable(e.getValue())
 					.filter(JsonElement::isJsonArray).map(JsonElement::getAsJsonArray)
@@ -319,7 +315,7 @@ public class Statement implements ModInitializer, StatementApi
 		
 		for (final Entry<String, JsonElement> e : data.entrySet())
 		{
-			getOrEmpty.apply(new Identifier(e.getKey())).ifPresent(block ->
+			getOrEmpty.apply(IdentifierUtil.of(e.getKey())).ifPresent(block ->
 			{
 				final JsonArray states = Optional.ofNullable(e.getValue())
 					.filter(JsonElement::isJsonArray).map(JsonElement::getAsJsonArray)
@@ -346,7 +342,7 @@ public class Statement implements ModInitializer, StatementApi
 					
 					final Optional<Identifier> syncedBlockId = Optional.ofNullable(syncedStateData.get("name"))
 						.filter(JsonElement::isJsonPrimitive).map(JsonElement::getAsString)
-						.map(Identifier::new);
+						.map(IdentifierUtil::of);
 					
 					final JsonObject syncedStateProperties = Optional.ofNullable(syncedStateData.get("properties"))
 						.filter(JsonElement::isJsonObject).map(JsonElement::getAsJsonObject)

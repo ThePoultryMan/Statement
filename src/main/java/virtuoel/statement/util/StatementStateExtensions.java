@@ -19,7 +19,7 @@ public interface StatementStateExtensions<S>
 		return false;
 	}
 	
-	default void statement_setEntries(ImmutableMap<Property<?>, Comparable<?>> entries)
+	default void statement_setEntries(Map<Property<?>, Comparable<?>> entries)
 	{
 		
 	}
@@ -39,7 +39,7 @@ public interface StatementStateExtensions<S>
 		
 	}
 	
-	default ImmutableMap<Property<?>, Comparable<?>> statement_getEntries()
+	default Map<Property<?>, Comparable<?>> statement_getEntries()
 	{
 		return ImmutableMap.of();
 	}

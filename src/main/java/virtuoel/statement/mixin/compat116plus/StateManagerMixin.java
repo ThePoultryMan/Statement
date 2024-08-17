@@ -33,6 +33,8 @@ import net.minecraft.state.State;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import virtuoel.statement.api.RefreshableStateManager;
+import virtuoel.statement.util.DataFixerUtil;
+import virtuoel.statement.util.StateManagerFactoryUtils;
 import virtuoel.statement.util.StatementStateExtensions;
 
 @Mixin(StateManager.class)
@@ -63,7 +65,7 @@ public class StateManagerMixin<O, S extends State<O, S>> implements RefreshableS
 		@SuppressWarnings("unchecked")
 		final MapCodec<S> c = (MapCodec<S>) ((StatementStateExtensions<S>) states.get(0)).statement_getCodec();
 		mapCodec = c;
-		statement_stateFunction = (o, m) -> (S) statement_factory.create(o, m, mapCodec);
+		statement_stateFunction = (o, m) -> StateManagerFactoryUtils.create(statement_factory, o, m, mapCodec);
 	}
 	
 	@Override
@@ -102,7 +104,7 @@ public class StateManagerMixin<O, S extends State<O, S>> implements RefreshableS
 	private static <S extends State<?, S>, T extends Comparable<T>> MapCodec<Property.Value<T>> fieldOfProxy(Codec<Property.Value<T>> c, String string, MapCodec<S> mapCodec, Supplier<S> supplier, String noop, Property<T> arg)
 	{
 		final Supplier<Property.Value<T>> v = Suppliers.memoize(() -> arg.createValue(supplier.get()));
-		return new OptionalFieldCodec<>(string, c).xmap(
+		return DataFixerUtil.newOptionalFieldCodec(string, c).xmap(
 			o -> o.orElse(v.get()),
 			Optional::of
 		);

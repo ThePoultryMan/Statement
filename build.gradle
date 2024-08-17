@@ -1,5 +1,6 @@
 plugins {
-	id "fabric-loom" version "1.4.+"
+	// We use Loom 1.6 instead of 1.7 so we don't *need* to use Java 21.
+	id "fabric-loom" version "1.6-SNAPSHOT"
 	id "eclipse"
 	id "maven-publish"
 	id "com.github.breadmoirai.github-release" version "2.4.1"

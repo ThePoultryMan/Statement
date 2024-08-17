@@ -5,6 +5,7 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 
 import net.minecraft.util.Identifier;
+import virtuoel.statement.util.IdentifierUtil;
 
 public class IdentifierProperty extends VanillaCompatibleProperty<Identifier> implements MutableProperty<Identifier>
 {
@@ -30,7 +31,7 @@ public class IdentifierProperty extends VanillaCompatibleProperty<Identifier> im
 			try
 			{
 				final int namespaceLength = Integer.parseInt(valueName.substring(underscoreIndex + 1));
-				return Optional.of(new Identifier(valueName.substring(0, namespaceLength), valueName.substring(namespaceLength + 1, underscoreIndex)));
+				return Optional.of(IdentifierUtil.of(valueName.substring(0, namespaceLength), valueName.substring(namespaceLength + 1, underscoreIndex)));
 			}
 			catch (NumberFormatException e)
 			{

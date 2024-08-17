@@ -146,8 +146,8 @@ public abstract class AbstractStateMixin<O, S> implements StatementStateExtensio
 	}
 	
 	@Override
-	public void statement_setEntries(ImmutableMap<Property<?>, Comparable<?>> entries)
+	public void statement_setEntries(Map<Property<?>, Comparable<?>> entries)
 	{
-		this.field_12285 = HydrogenCompatibility.INSTANCE.wrapEntries(entries);
+		this.field_12285 = HydrogenCompatibility.INSTANCE.wrapEntries(ImmutableMap.copyOf(entries));
 	}
 }

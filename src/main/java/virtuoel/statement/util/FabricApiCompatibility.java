@@ -18,6 +18,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import net.minecraft.network.packet.CustomPayload;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 
 import com.google.common.collect.ImmutableMap;
@@ -62,6 +63,9 @@ import net.minecraft.world.BlockView;
 import virtuoel.kanos_config.api.InvalidatableLazySupplier;
 import virtuoel.statement.Statement;
 import virtuoel.statement.api.StateRefresher;
+import virtuoel.statement.api.compatibility.AbstractCustomPayload;
+import virtuoel.statement.api.compatibility.ToClientPayload;
+import virtuoel.statement.api.compatibility.ToServerPayload;
 
 public class FabricApiCompatibility
 {
@@ -185,7 +189,7 @@ public class FabricApiCompatibility
 					final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
 					final S state = stateFunc.apply(context.getSource().getWorld(), pos);
 					
-					final ImmutableMap<Property<?>, Comparable<?>> entries = ((StatementStateExtensions<?>) state).statement_getEntries();
+					final ImmutableMap<Property<?>, Comparable<?>> entries = (ImmutableMap<Property<?>, Comparable<?>>) ((StatementStateExtensions<?>) state).statement_getEntries();
 					
 					final StringBuilder stringBuilder = new StringBuilder();
 					stringBuilder.append(RegistryUtils.getId(registry, entryFunction.apply(state)));
@@ -245,16 +249,17 @@ public class FabricApiCompatibility
 			if (ServerPlayNetworking.canSend(player, packetId))
 			{
 				final PlayerEntity executor = context.getSource().getPlayerOrThrow();
-				final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer()).writeUuid(executor.getUuid()).writeVarInt(rate);
+				final AbstractCustomPayload payload = new ToClientPayload(packetId, executor.getUuid(), rate);
+//				final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer()).writeUuid(executor.getUuid()).writeVarInt(rate);
 				
 				for (int i = 0; i < rate; i++)
 				{
-					buffer.writeVarInt(initialId + i);
+					payload.setInt(initialId + i);
 				}
 				
 				CommandUtils.sendFeedback(context.getSource(), () -> literal("Running state validation..."), false);
-				
-				ServerPlayNetworking.send(player, packetId, buffer);
+
+				ServerPlayNetworking.send(player, payload);
 				
 				return 1;
 			}
@@ -279,11 +284,12 @@ public class FabricApiCompatibility
 	
 	public static <S> void setupServerStateValidation(final Identifier packetId, final IdList<S> stateIdList, final Function<S, NbtCompound> stateToNbtFunction)
 	{
-		ServerPlayNetworking.registerGlobalReceiver(packetId, (server, player, handler, buf, responseSender) ->
+		ServerPlayNetworking.registerGlobalReceiver(new CustomPayload.Id<>(packetId), (payload, context) ->
 		{
-			final UUID uuid = buf.readUuid();
+			AbstractCustomPayload castedPayload = (AbstractCustomPayload) payload;
+			final UUID uuid = castedPayload.getUuid();
 			
-			final int idQuantity = buf.readVarInt();
+			final int idQuantity = castedPayload.getInt(0);
 			
 			if (idQuantity == 0)
 			{
@@ -295,13 +301,13 @@ public class FabricApiCompatibility
 			
 			for (int i = 0; i < idQuantity; i++)
 			{
-				ids[i] = buf.readVarInt();
-				snbts[i] = buf.readString(32767);
+				ids[i] = castedPayload.getInt(i + 1);
+//				snbts[i] = buf.readString(32767);
 			}
 			
-			server.execute(() ->
+			context.server().execute(() ->
 			{
-				final PlayerEntity executor = player.getEntityWorld().getPlayerByUuid(uuid);
+				final PlayerEntity executor = context.player().getEntityWorld().getPlayerByUuid(uuid);
 				
 				if (!executor.isSneaking())
 				{
@@ -391,16 +397,17 @@ public class FabricApiCompatibility
 					
 					if (!done && idsFound)
 					{
-						if (ServerPlayNetworking.canSend(player, packetId))
+						if (ServerPlayNetworking.canSend(context.player(), packetId))
 						{
-							final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer()).writeUuid(uuid).writeVarInt(idQuantity);
+							final ToClientPayload buffer = new ToClientPayload(packetId, uuid, ids.length);
 							
 							for (int i = 0; i < idQuantity; i++)
 							{
-								buffer.writeVarInt(ids[i] + idQuantity);
+//								buffer.writeVarInt(ids[i] + idQuantity);
+								buffer.setInt(ids[i]);
 							}
 							
-							ServerPlayNetworking.send(player, packetId, buffer);
+							ServerPlayNetworking.send(context.player(), buffer);
 						}
 						else
 						{
@@ -442,12 +449,13 @@ public class FabricApiCompatibility
 	{
 		public static <S> void setupClientStateValidation(final Identifier packetId, final IdList<S> stateIdList, final Function<S, NbtCompound> stateToNbtFunction)
 		{
-			ClientPlayNetworking.registerGlobalReceiver(packetId, (client, handler, buf, responseSender) ->
+			ClientPlayNetworking.registerGlobalReceiver(new CustomPayload.Id<>(packetId), (payload, context) ->
 			{
-				final ClientPlayerEntity player = client.player;
+				final ClientPlayerEntity player = context.player();
+				final AbstractCustomPayload castedPayload = (AbstractCustomPayload) payload;
 				
-				final UUID uuid = buf.readUuid();
-				final int idQuantity = buf.readVarInt();
+				final UUID uuid = castedPayload.getUuid();
+				final int idQuantity = castedPayload.getInt(0);
 				
 				if (idQuantity == 0)
 				{
@@ -458,24 +466,25 @@ public class FabricApiCompatibility
 				
 				for (int i = 0; i < idQuantity; i++)
 				{
-					ids[i] = buf.readVarInt();
+					ids[i] = castedPayload.getInt(i + 1);
 				}
 				
-				client.execute(() ->
+				context.client().execute(() ->
 				{
 					if (!player.isSneaking())
 					{
-						final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer()).writeUuid(uuid).writeVarInt(idQuantity);
+						final ToServerPayload buffer = new ToServerPayload(packetId, uuid, ids.length);
 						
 						for (int i = 0; i < idQuantity; i++)
 						{
 							final S state = stateIdList.get(ids[i]);
 							final String snbt = state == null ? "No state found on client for ID " + ids[i] : stateToNbtFunction.apply(state).toString();
-							
-							buffer.writeVarInt(ids[i]).writeString(snbt);
+
+							buffer.setInt(ids[i]);
+							buffer.setStateNbt(snbt);
 						}
 						
-						ClientPlayNetworking.send(packetId, buffer);
+						ClientPlayNetworking.send(buffer);
 					}
 				});
 			});
@@ -491,7 +500,7 @@ public class FabricApiCompatibility
 	{
 		final NbtCompound compound = new NbtCompound();
 		compound.putString("Name", RegistryUtils.getId(registry, entryFunction.apply(state)).toString());
-		final ImmutableMap<Property<?>, Comparable<?>> entries = ((StatementStateExtensions<?>) state).statement_getEntries();
+		final ImmutableMap<Property<?>, Comparable<?>> entries = (ImmutableMap<Property<?>, Comparable<?>>) ((StatementStateExtensions<?>) state).statement_getEntries();
 		
 		if (!entries.isEmpty())
 		{
